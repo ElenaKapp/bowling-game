@@ -1,10 +1,10 @@
 import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { BowlingComponent } from './bowling/bowling.component';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
+  imports: [BowlingComponent],
+  template: `<main><app-bowling></app-bowling></main>`,
   styleUrl: './app.scss'
 })
 export class App {

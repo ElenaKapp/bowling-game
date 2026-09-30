@@ -6,7 +6,8 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "test:unit": "vitest run src/app --reporter verbose"
   },
   "private": true,
   "packageManager": "npm@11.7.0",
@@ -16,7 +17,10 @@
     "@angular/core": "^21.2.0",
     "@angular/forms": "^21.2.0",
     "@angular/platform-browser": "^21.2.0",
+    "@angular/animations": "^21.2.0",
     "@angular/router": "^21.2.0",
+    "@angular/material": "^21.2.0",
+    "@angular/cdk": "^21.2.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

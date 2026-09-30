@@ -1,0 +1,52 @@
+<mat-card class="container">
+  <h2>Bowling Score Calculator</h2>
+  <p class="hint">Gib die Anzahl der umgeworfenen Pins ein (0–10). Drücke „hinzufügen“ für jeden Wurf.</p>
+
+  <div class="controls">
+    <mat-form-field appearance="outline">
+      <input matInput type="number" min="0" [max]="getAllowedMax()" placeholder="Pins" [(ngModel)]="rollInput">
+      <mat-hint align="end">Max: {{ getAllowedMax() }}</mat-hint>
+    </mat-form-field>
+    <button mat-raised-button color="primary" (click)="addRoll()" [disabled]="!rollInput">hinzufügen</button>
+    <button mat-stroked-button (click)="removeLast()">entfernen</button>
+    <button mat-button color="warn" (click)="reset()">alles zurücksetzen</button>
+  </div>
+
+  <div class="scoreboard-wrap">
+    <div class="scoreboard" role="table" aria-label="Bowling scoreboard">
+      <div class="frame-row header" role="row">
+        @for (slot of frameSlots; track slot) {
+          <div class="frame-header" role="columnheader">{{ slot }}</div>
+        }
+      </div>
+
+      <div class="roll-row" role="row">
+        @for (frame of frames(); track frame; let idx = $index) {
+          <div class="frame-cell" role="cell">
+            <div class="roll-boxes" [class.final-frame]="idx === 9">
+              @for (cell of displayRolls(frame, idx); track cell) {
+                <span
+                  class="roll-cell"
+                  [class.is-final]="idx === 9"
+                  [class.is-strike]="cell === 'X'"
+                  [class.is-spare]="cell === '/'"
+                  [class.is-zero]="cell === '-'"
+                >{{ cell || '&nbsp;' }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="score-row" role="row">
+        @for (frame of frames(); track frame; let idx = $index) {
+          <div class="frame-cell score-cell" role="cell">
+            {{ displayCumulative(frame) }}
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="total">Gesamt: <strong>{{ total() }}</strong></div>
+</mat-card>
