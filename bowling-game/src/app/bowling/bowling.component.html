@@ -4,7 +4,7 @@
 
   <div class="controls">
     <mat-form-field appearance="outline">
-      <input matInput type="number" min="0" [max]="getAllowedMax()" placeholder="Pins" [(ngModel)]="rollInput">
+      <input matInput type="number" min="0" [max]="getAllowedMax()" placeholder="Pins" [(ngModel)]="rollInput" (keydown.enter)="addRoll()">
       <mat-hint align="end">Max: {{ getAllowedMax() }}</mat-hint>
     </mat-form-field>
     <button mat-raised-button color="primary" (click)="addRoll()" [disabled]="!rollInput">hinzufügen</button>

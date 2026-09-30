@@ -122,7 +122,7 @@ export class BowlingComponent {
       const first = rolls[0];
       const second = rolls[1];
       if (first === 10) {
-        return ['', 'X'];
+        return ['X', ''];
       }
       const a = first ?? null;
       const b = second ?? null;
