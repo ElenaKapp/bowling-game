@@ -1,6 +1,6 @@
 <mat-card class="container">
   <h2>Bowling Score Calculator</h2>
-  <p class="hint">Gib die Anzahl der umgeworfenen Pins ein (0–10). Drücke „hinzufügen“ für jeden Wurf.</p>
+  <p class="hint">Gib die Anzahl der umgeworfenen Pins ein (0–{{ maxPins }}). Drücke „hinzufügen“ für jeden Wurf.</p>
 
   <div class="controls">
     <mat-form-field appearance="outline">
@@ -21,13 +21,13 @@
       </div>
 
       <div class="roll-row" role="row">
-        @for (frame of frames(); track frame; let idx = $index) {
+        @for (frame of frames(); track frame; let rollIndex = $index) {
           <div class="frame-cell" role="cell">
-            <div class="roll-boxes" [class.final-frame]="idx === 9">
-              @for (cell of displayRolls(frame, idx); track cell) {
+            <div class="roll-boxes" [class.final-frame]="rollIndex === lastFrameIndex">
+              @for (cell of displayRolls(frame, rollIndex); track $index + cell;) {
                 <span
                   class="roll-cell"
-                  [class.is-final]="idx === 9"
+                  [class.is-final]="rollIndex === lastFrameIndex"
                   [class.is-strike]="cell === 'X'"
                   [class.is-spare]="cell === '/'"
                   [class.is-zero]="cell === '-'"
@@ -39,7 +39,7 @@
       </div>
 
       <div class="score-row" role="row">
-        @for (frame of frames(); track frame; let idx = $index) {
+        @for (frame of frames(); track frame;) {
           <div class="frame-cell score-cell" role="cell">
             {{ displayCumulative(frame) }}
           </div>

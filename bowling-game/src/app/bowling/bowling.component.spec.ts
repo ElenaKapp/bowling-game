@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it } from 'vitest';
 import { BowlingComponent } from './bowling.component';
 
 describe('BowlingComponent', () => {

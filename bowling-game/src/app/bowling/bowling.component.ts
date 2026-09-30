@@ -8,7 +8,14 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatTableModule } from '@angular/material/table';
 
-import { computeFramesFromRolls, Frame } from './score';
+import {
+  computeFramesFromRolls,
+  Frame,
+  LAST_FRAME_ROLLS,
+  MAX_PINS,
+  NORMAL_ROLLS_PER_FRAME,
+  TOTAL_FRAMES
+} from './score';
 
 @Component({
   selector: 'app-bowling',
@@ -29,13 +36,15 @@ import { computeFramesFromRolls, Frame } from './score';
 export class BowlingComponent {
   // localStorage key for persistence
   private storageKey = 'bowling_game_rolls_v1';
-  readonly frameSlots = Array.from({ length: 10 }, (_, index) => index + 1);
+  readonly frameSlots = Array.from({ length: TOTAL_FRAMES }, (_, index) => index + 1);
 
   constructor() {
     this.loadFromStorage();
     this.recalculate();
   }
 
+  lastFrameIndex = TOTAL_FRAMES - 1;
+  maxPins = MAX_PINS;
   rollInput = signal<string>('');
   rolls = signal<number[]>([]);
   frames = signal<Frame[]>([]);
@@ -64,6 +73,11 @@ export class BowlingComponent {
     this.frames.set([]);
     this.total.set(0);
     this.rollInput.set('');
+    try {
+      localStorage.removeItem(this.storageKey);
+    } catch (e) {
+      // ignore storage errors
+    }
   }
 
   recalculate() {
@@ -94,62 +108,67 @@ export class BowlingComponent {
     }
   }
 
+  // calculate the maximum allowed roll for the current frame
   getAllowedMax(): number {
     const rolls = [...this.rolls()];
     let i = 0;
-    for (let f = 0; f < 9; f++) {
-      if (i >= rolls.length) return 10;
+    for (let f = 0; f < TOTAL_FRAMES - 1; f++) {
+      if (i >= rolls.length) return MAX_PINS;
       const first = rolls[i];
-      if (first === 10) {
+      if (first === MAX_PINS) {
         i += 1;
         continue;
       }
       if (i + 1 >= rolls.length) {
-        const max = 10 - (first ?? 0);
-        return Math.max(0, Math.min(10, max));
+        const max = MAX_PINS - (first ?? 0);
+        return Math.max(0, Math.min(MAX_PINS, max));
       }
-      i += 2;
+      i += NORMAL_ROLLS_PER_FRAME;
     }
-    return 10;
+    return MAX_PINS;
+  }
+
+  // format roll values for display in the scoreboard, using standard bowling notation
+  private formatRoll(value: number | null): string {
+    if (value === null) return '';
+    if (value === 0) return '-';
+    if (value === MAX_PINS) return 'X';
+    return String(value);
+  }
+
+  // format the second roll in a frame, taking into account the first roll
+  private formatSecondRoll(first: number | null, second: number | null): string {
+    if (second === null) return '';
+    if (first === MAX_PINS && second === MAX_PINS) return 'X';
+    if (first !== MAX_PINS && (first ?? 0) + (second ?? 0) === MAX_PINS) return '/';
+    if (second === MAX_PINS) return 'X';
+    if (second === 0) return '-';
+    return String(second);
   }
 
   // Formatting helpers for the typical bowling scoreboard
-  displayRolls(frame: Frame, idx: number): string[] {
+  displayRolls(frame: Frame, rollIndex: number): string[] {
     // frames 0..8 => show 2 cells, frame 9 (10th) => show 3 cells
-    if (!frame) return idx < 9 ? ['', ''] : ['', '', ''];
-    const rolls = frame.rolls || [];
-    if (idx < 9) {
-      const first = rolls[0];
-      const second = rolls[1];
-      if (first === 10) {
-        return ['X', ''];
-      }
-      const a = first ?? null;
-      const b = second ?? null;
-      const dispA = a === 0 ? '-' : (a === null ? '' : String(a));
-      let dispB = '';
-      if (b === null) dispB = '';
-      else if ((a ?? 0) + (b ?? 0) === 10) dispB = '/';
-      else dispB = b === 0 ? '-' : String(b);
-      return [dispA, dispB];
-    } else {
-      // 10th frame
-      const r0 = rolls[0] ?? null;
-      const r1 = rolls[1] ?? null;
-      const r2 = rolls[2] ?? null;
-      const disp0 = r0 === 10 ? 'X' : (r0 === 0 ? '-' : (r0 === null ? '' : String(r0)));
-      let disp1 = '';
-      if (r1 === null) disp1 = '';
-      else if (r0 === 10 && r1 === 10) disp1 = 'X';
-      else if (r0 !== 10 && (r0 ?? 0) + (r1 ?? 0) === 10) disp1 = '/';
-      else disp1 = r1 === 10 ? 'X' : (r1 === 0 ? '-' : String(r1));
-      let disp2 = '';
-      if (r2 === null) disp2 = '';
-      else if (r2 === 10) disp2 = 'X';
-      else if (r1 !== null && ((r1 !== 10) && ((r1 ?? 0) + (r2 ?? 0) === 10))) disp2 = '/';
-      else disp2 = r2 === 0 ? '-' : String(r2);
-      return [disp0, disp1, disp2];
+    if (!frame) {
+      return rollIndex < TOTAL_FRAMES - 1 ? Array(NORMAL_ROLLS_PER_FRAME).fill('') : Array(LAST_FRAME_ROLLS).fill('');
     }
+
+    const rolls = frame.rolls || [];
+    if (rollIndex < TOTAL_FRAMES - 1) {
+      const [first, second] = [rolls[0] ?? null, rolls[1] ?? null];
+      if (first === MAX_PINS) return ['X', ''];
+      return [this.formatRoll(first), this.formatSecondRoll(first, second)];
+    }
+
+    const [r0, r1, r2] = [rolls[0] ?? null, rolls[1] ?? null, rolls[2] ?? null];
+    const disp2 = (() => {
+      if (r2 === null) return '';
+      if (r2 === MAX_PINS) return 'X';
+      if (r1 !== null && r1 !== MAX_PINS && (r1 ?? 0) + (r2 ?? 0) === MAX_PINS) return '/';
+      return this.formatRoll(r2);
+    })();
+
+    return [this.formatRoll(r0), this.formatSecondRoll(r0, r1), disp2];
   }
 
   displayCumulative(frame: Frame): string {
